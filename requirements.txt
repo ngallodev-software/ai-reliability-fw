@@ -1,0 +1,8 @@
+alembic==1.18.4
+asyncpg==0.30.0
+jsonschema==4.26.0
+psycopg[binary]==3.2.10
+python-dotenv==1.2.2
+rich==14.3.3
+SQLAlchemy==2.0.48
+psycopg2

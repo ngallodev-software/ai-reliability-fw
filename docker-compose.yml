@@ -1,0 +1,30 @@
+services:
+  db:
+    # Use the official postgres:15 image from Docker Hub
+    image: postgres:15
+    container_name: reliability_db
+    restart: always
+    environment:
+      # Define environment variables for the database configuration
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: reliability_fw
+    ports:
+      # Map the container's port 5432 to the host's port 5432
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d reliability_fw"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      # Mount a named volume to persist the database data
+      - postgres_data:/var/lib/postgresql/data
+      # Optional: Mount a directory for initialization scripts (e.g., .sql files)
+      # - ./init-scripts:/docker-entrypoint-initdb.d
+
+# Define the named volumes
+volumes:
+  postgres_data:
+#    driver: local
+
