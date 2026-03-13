@@ -59,7 +59,10 @@ class PhaseExecutor:
                 "retry_attempt_num": attempt_num,
                 "latency_ms": llm_result["latency_ms"],
                 "response_raw": llm_result["response_raw"],
-                "failure_category": failures[0] if failures else None
+                "failure_category": failures[0] if failures else None,
+                "input_tokens": llm_result.get("input_tokens"),
+                "output_tokens": llm_result.get("output_tokens"),
+                "token_cost_usd": llm_result.get("token_cost_usd"),
             }
             await self.repo.persist_llm_call(call_record)
 
