@@ -1,6 +1,6 @@
 from datetime import datetime
 from uuid import uuid4
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, Enum
+from sqlalchemy import Column, String, Integer, Float, DateTime, ForeignKey, Text, Enum
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import DeclarativeBase
 import enum
@@ -18,6 +18,7 @@ class FailureCategory(str, enum.Enum):
     HUMAN_ESCALATED = "HUMAN_ESCALATED"
     VALIDATION_FAILURE = "VALIDATION_FAILURE"
     INPUT_VALIDATION_ERROR = "INPUT_VALIDATION_ERROR"
+    OUTPUT_CONTENT_ERROR = "OUTPUT_CONTENT_ERROR"
 
 class RunStatus(str, enum.Enum):
     RUNNING = "RUNNING"
@@ -52,6 +53,9 @@ class LLMCall(Base):
     failure_category = Column(Enum(FailureCategory), nullable=True)
     latency_ms = Column(Integer)
     response_raw = Column(Text)
+    input_tokens = Column(Integer, nullable=True)
+    output_tokens = Column(Integer, nullable=True)
+    token_cost_usd = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Prompt(Base):

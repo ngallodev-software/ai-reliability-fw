@@ -19,7 +19,7 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-failure_category_enum = sa.Enum(
+failure_category_enum = postgresql.ENUM(
     "SCHEMA_VIOLATION",
     "HALLUCINATION_SIGNAL",
     "MISSING_REQUIRED_FIELD",
@@ -30,15 +30,17 @@ failure_category_enum = sa.Enum(
     "VALIDATION_FAILURE",
     "INPUT_VALIDATION_ERROR",
     name="failurecategory",
+    create_type=False,
 )
 
-run_status_enum = sa.Enum(
+run_status_enum = postgresql.ENUM(
     "RUNNING",
     "COMPLETED",
     "FAILED",
     "ESCALATED",
     "REPLAYING",
     name="runstatus",
+    create_type=False,
 )
 
 

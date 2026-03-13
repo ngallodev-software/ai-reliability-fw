@@ -1,6 +1,6 @@
 from uuid import UUID
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy import update
+from sqlalchemy import update, select
 from src.core.models import Prompt, Workflow, LLMCall, EscalationRecord, WorkflowRun, RunStatus
 
 class ReliabilityRepository:
@@ -50,3 +50,23 @@ class ReliabilityRepository:
             .values(status=status)
         )
         await self.session.commit()
+
+    async def get_run(self, run_id: UUID) -> WorkflowRun | None:
+        result = await self.session.execute(
+            select(WorkflowRun).where(WorkflowRun.run_id == run_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_calls_for_run(self, run_id: UUID) -> list[LLMCall]:
+        result = await self.session.execute(
+            select(LLMCall)
+            .where(LLMCall.run_id == run_id)
+            .order_by(LLMCall.retry_attempt_num)
+        )
+        return list(result.scalars().all())
+
+    async def get_escalations_for_run(self, run_id: UUID) -> list[EscalationRecord]:
+        result = await self.session.execute(
+            select(EscalationRecord).where(EscalationRecord.run_id == run_id)
+        )
+        return list(result.scalars().all())

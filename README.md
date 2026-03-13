@@ -57,7 +57,7 @@ alembic upgrade head
 The demo uses `PhaseExecutor` and `ReliabilityRepository`. It seeds a workflow, prompt, and run in Postgres, asks you to paste an LLM response, and then applies the retry policy.
 
 ```bash
-python3 demo/failure_path_runner.py
+python demo/failure_path_runner.py
 ```
 
 When prompted:
@@ -83,7 +83,7 @@ Example valid response:
 The smoke tests use fakes for the repository and LLM client, so they do not require Postgres.
 
 ```bash
-python3 -m unittest tests.test_phase_executor
+python -m unittest tests.test_phase_executor
 ```
 
 ## Database notes
