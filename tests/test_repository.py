@@ -2,8 +2,8 @@
 
 Run with:
     docker compose up -d db
-    venv/bin/alembic upgrade head
-    venv/bin/python -m unittest tests.test_repository
+    alembic upgrade head
+    python -m unittest tests.test_repository
 """
 import hashlib
 import os
@@ -25,6 +25,10 @@ def make_engine():
     return create_async_engine(DB_URL, echo=False)
 
 
+@unittest.skipUnless(
+    os.getenv("DATABASE_URL") or os.getenv("POSTGRES_AVAILABLE"),
+    "Set DATABASE_URL or POSTGRES_AVAILABLE=1 to run DB integration tests",
+)
 class RepositoryIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.engine = make_engine()

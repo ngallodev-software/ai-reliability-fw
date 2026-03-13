@@ -12,6 +12,8 @@ class SafetyValidator(BaseValidator):
 
     def validate(self, artifact: str, context: dict[str, Any] | None = None) -> ValidationResult:  # noqa: ARG002
         artifact_lower = artifact.lower()
+        # Intentional substring match (not word-boundary): "harm" will match "harmful" and "Harmless".
+        # Keep blocklist terms specific enough to avoid false positives.
         detected = [term for term in self.blocklist if term.lower() in artifact_lower]
 
         if detected:
