@@ -70,7 +70,6 @@ async def seed_demo_records(
     repo: ReliabilityRepository, prompt_text: str
 ) -> tuple[uuid.UUID, uuid.UUID, uuid.UUID]:
     workflow_id = uuid.uuid4()
-    prompt_id = uuid.uuid4()
     run_id = uuid.uuid4()
 
     await repo.persist_workflow(
@@ -84,9 +83,9 @@ async def seed_demo_records(
             },
         }
     )
-    await repo.persist_prompt(
+    prompt_id = await repo.persist_prompt(
         {
-            "prompt_id": prompt_id,
+            "prompt_id": uuid.uuid4(),
             "content": prompt_text,
             "prompt_hash": hashlib.sha256(prompt_text.encode("utf-8")).hexdigest(),
             "version_tag": "demo-v1",

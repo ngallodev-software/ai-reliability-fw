@@ -71,7 +71,17 @@ class PhaseExecutor:
             
             if decision.action == "COMPLETE":
                 await self.repo.update_run_status(run_id, RunStatus.COMPLETED)
-                return {"status": "SUCCESS", "artifact": llm_result["response_raw"]}
+                return {
+                    "status": "SUCCESS",
+                    "artifact": llm_result["response_raw"],
+                    "call_id": str(call_id),
+                    "provider": llm_result["provider"],
+                    "model": llm_result["model"],
+                    "latency_ms": llm_result["latency_ms"],
+                    "input_tokens": llm_result.get("input_tokens"),
+                    "output_tokens": llm_result.get("output_tokens"),
+                    "token_cost_usd": llm_result.get("token_cost_usd"),
+                }
             
             if decision.action == "ESCALATE":
                 await self.repo.create_escalation({

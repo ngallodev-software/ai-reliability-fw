@@ -15,9 +15,16 @@ class ReliabilityRepository:
 
     async def persist_prompt(self, prompt_data: dict):
         stmt = insert(Prompt).values(**prompt_data)
-        stmt = stmt.on_conflict_do_nothing(index_elements=["prompt_id"])
-        await self.session.execute(stmt)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["prompt_hash"],
+            set_={
+                "content": stmt.excluded.content,
+                "version_tag": stmt.excluded.version_tag,
+            },
+        ).returning(Prompt.prompt_id)
+        result = await self.session.execute(stmt)
         await self.session.commit()
+        return result.scalar_one()
 
     async def persist_run(self, run_data: dict):
         stmt = insert(WorkflowRun).values(**run_data)
