@@ -17,7 +17,7 @@ class PhaseExecutor:
 
     async def execute(self, run_id: uuid.UUID, phase_id: uuid.UUID, prompt_id: uuid.UUID, input_artifact: Any, retry_policy: RetryPolicy):
         attempt_num = 0
-        model_name = "claude-3-sonnet"
+        model = "claude-3-sonnet"
         
         # 1. Pre-call Input Validation
         # (Assuming the first validator in the list is the InputSchemaValidator)
@@ -39,7 +39,7 @@ class PhaseExecutor:
             call_id = uuid.uuid5(uuid.NAMESPACE_URL, f"{run_id}:{phase_id}:{prompt_id}:{attempt_num}")
             
             # Call the LLM (Manual CLI for Phase 1 demo)
-            llm_result = await self.llm.call(str(input_artifact), model=model_name)
+            llm_result = await self.llm.call(str(input_artifact), model)
             
             # Post-call Validation
             failures = []
@@ -71,7 +71,17 @@ class PhaseExecutor:
             
             if decision.action == "COMPLETE":
                 await self.repo.update_run_status(run_id, RunStatus.COMPLETED)
-                return {"status": "SUCCESS", "artifact": llm_result["response_raw"]}
+                return {
+                    "status": "SUCCESS",
+                    "artifact": llm_result["response_raw"],
+                    "call_id": str(call_id),
+                    "provider": llm_result["provider"],
+                    "model": llm_result["model"],
+                    "latency_ms": llm_result["latency_ms"],
+                    "input_tokens": llm_result.get("input_tokens"),
+                    "output_tokens": llm_result.get("output_tokens"),
+                    "token_cost_usd": llm_result.get("token_cost_usd"),
+                }
             
             if decision.action == "ESCALATE":
                 await self.repo.create_escalation({

@@ -138,6 +138,33 @@ class RepositoryIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(call.output_tokens, 50)
         self.assertEqual(call.token_cost_usd, 0.0)
 
+    async def test_persist_prompt_reuses_existing_prompt_hash(self):
+        """Re-seeding the same prompt text should return the canonical prompt_id."""
+        prompt_text = "Stable prompt text"
+        prompt_hash = hashlib.sha256(prompt_text.encode()).hexdigest()
+        first_prompt_id = uuid.uuid4()
+        second_prompt_id = uuid.uuid4()
+
+        persisted_first = await self.repo.persist_prompt(
+            {
+                "prompt_id": first_prompt_id,
+                "content": prompt_text,
+                "prompt_hash": prompt_hash,
+                "version_tag": "demo-v1",
+            }
+        )
+        persisted_second = await self.repo.persist_prompt(
+            {
+                "prompt_id": second_prompt_id,
+                "content": prompt_text,
+                "prompt_hash": prompt_hash,
+                "version_tag": "demo-v2",
+            }
+        )
+
+        self.assertEqual(persisted_first, first_prompt_id)
+        self.assertEqual(persisted_second, first_prompt_id)
+
     async def test_create_escalation_returns_id(self):
         esc_id = await self.repo.create_escalation(
             {
