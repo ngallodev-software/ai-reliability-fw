@@ -31,3 +31,6 @@ include-package-data = false
 where = ["."]
 include = ["src*"]
 namespaces = true
+
+# Version is the single source of truth in src/__init__.py.
+# To release: bump __version__ there, update CHANGELOG.md, commit, tag v<version>.

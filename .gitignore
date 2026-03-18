@@ -4,4 +4,12 @@ __pycache__/
 .venv/
 venv/
 
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Generated cache files
+.dev-report-cache.md
+
 codex-analysis.md
