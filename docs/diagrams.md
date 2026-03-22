@@ -6,6 +6,7 @@
 
 ```mermaid
 erDiagram
+
     workflows {
         UUID workflow_id PK
         String name
@@ -23,14 +24,14 @@ erDiagram
     prompts {
         UUID prompt_id PK
         Text content
-        String prompt_hash UK
+        String prompt_hash "unique key"
         String version_tag
     }
 
     llm_calls {
         UUID call_id PK "uuid5 deterministic"
         UUID run_id FK
-        UUID phase_id "no FK — caller-owned"
+        UUID phase_id "no FK - caller-owned"
         UUID prompt_id FK
         String provider
         String model
@@ -47,7 +48,7 @@ erDiagram
     escalation_records {
         UUID escalation_id PK
         UUID run_id FK
-        UUID phase_id "no FK — caller-owned"
+        UUID phase_id "no FK - caller-owned"
         UUID llm_call_id FK "nullable"
         Integer retry_attempt_num
         Enum failure_category
@@ -209,10 +210,10 @@ classDiagram
 sequenceDiagram
     actor Caller
     participant PE as PhaseExecutor
-    participant V0 as validators[0]<br/>(InputIntegrityValidator)
+    participant V0 as "validators[0]<br/>(InputIntegrityValidator)"
     participant LLM as llm_client
-    participant Vn as validators[1:]<br/>(post-call)
-    participant DE as decide()
+    participant Vn as "validators[1:]<br/>(post-call)"
+    participant DE as "decide()"
     participant DB as ReliabilityRepository
 
     Caller->>PE: execute(run_id, phase_id, prompt_id, input_artifact, retry_policy)
@@ -223,12 +224,12 @@ sequenceDiagram
     alt input invalid
         PE->>DB: create_escalation(INPUT_VALIDATION_ERROR)
         PE->>DB: update_run_status(ESCALATED)
-        PE-->>Caller: {status: HALTED}
-    else input valid — retry loop
-        loop attempt_num ≤ max_retries
+        PE-->>Caller: "{status: HALTED}"
+    else input valid - retry loop
+        loop attempt_num <= max_retries
             Note over PE: call_id = uuid5(run_id:phase_id:prompt_id:attempt_num)
             PE->>LLM: call(str(input_artifact))
-            LLM-->>PE: {response_raw, latency_ms, provider, model, tokens...}
+            LLM-->>PE: "{response_raw, latency_ms, provider, model, tokens...}"
 
             PE->>Vn: validate(response_raw) for each
             Vn-->>PE: ValidationResult[]
@@ -240,17 +241,17 @@ sequenceDiagram
 
             alt action == COMPLETE
                 PE->>DB: update_run_status(COMPLETED)
-                PE-->>Caller: {status: SUCCESS, artifact, call_id, provider,<br/>model, latency_ms, tokens...}
+                PE-->>Caller: "{status: SUCCESS, artifact, call_id, provider, model, latency_ms, tokens...}"
             else action == ESCALATE
                 PE->>DB: create_escalation(failure_category)
                 PE->>DB: update_run_status(ESCALATED)
-                PE-->>Caller: {status: ESCALATED, reason}
+                PE-->>Caller: "{status: ESCALATED, reason}"
             else action == RETRY
                 Note over PE: attempt_num += 1, loop continues
             end
         end
 
-        PE-->>Caller: {status: FAILED, reason: max retries exceeded}
+        PE-->>Caller: "{status: FAILED, reason: max retries exceeded}"
     end
 ```
 
@@ -259,15 +260,15 @@ sequenceDiagram
 ## 4. Component / Layer Diagram
 
 ```mermaid
-graph TD
+flowchart TD
     subgraph Entry["Entry Points"]
-        DEMO[demo/failure_path_runner.py]
-        TESTS[tests/]
+        DEMO["demo/failure_path_runner.py"]
+        TESTS["tests/"]
     end
 
     subgraph Engine["Engine Layer"]
         PE[PhaseExecutor]
-        DE[decision_engine.decide]
+        DE["decision_engine.decide"]
         PE --> DE
     end
 
@@ -288,12 +289,12 @@ graph TD
 
     subgraph DB["DB Layer"]
         RR[ReliabilityRepository]
-        SES[session / get_db]
+        SES["session / get_db"]
         RR --> SES
     end
 
     subgraph Core["Core Layer"]
-        MOD[models.py<br/>ORM tables + enums]
+        MOD["models.py<br/>ORM tables + enums"]
     end
 
     INFRA[(PostgreSQL)]
@@ -325,17 +326,17 @@ stateDiagram-v2
 
     Evaluating --> COMPLETE : no failures
 
-    Evaluating --> ESCALATE_IMMEDIATE : SAFETY_FLAG or\nINPUT_VALIDATION_ERROR present
+    Evaluating --> ESCALATE_IMMEDIATE : "SAFETY_FLAG or<br/>INPUT_VALIDATION_ERROR present"
 
     Evaluating --> ESCALATE_BUDGET : attempt_num >= max_retries
 
-    Evaluating --> ESCALATE_NO_RULE : primary failure has\nno RetryRule
+    Evaluating --> ESCALATE_NO_RULE : "primary failure has<br/>no RetryRule"
 
-    Evaluating --> RETRY : retry budget remaining\nAND rule exists for\nprimary failure
+    Evaluating --> RETRY : "retry budget remaining<br/>AND rule exists for<br/>primary failure"
 
-    RETRY --> [*] : DecisionResult(action=RETRY)
-    COMPLETE --> [*] : DecisionResult(action=COMPLETE)
-    ESCALATE_IMMEDIATE --> [*] : DecisionResult(action=ESCALATE)
-    ESCALATE_BUDGET --> [*] : DecisionResult(action=ESCALATE)
-    ESCALATE_NO_RULE --> [*] : DecisionResult(action=ESCALATE)
+    RETRY --> [*] : "DecisionResult(action=RETRY)"
+    COMPLETE --> [*] : "DecisionResult(action=COMPLETE)"
+    ESCALATE_IMMEDIATE --> [*] : "DecisionResult(action=ESCALATE)"
+    ESCALATE_BUDGET --> [*] : "DecisionResult(action=ESCALATE)"
+    ESCALATE_NO_RULE --> [*] : "DecisionResult(action=ESCALATE)"
 ```

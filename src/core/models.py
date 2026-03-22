@@ -29,6 +29,7 @@ class RunStatus(str, enum.Enum):
 
 class Workflow(Base):
     __tablename__ = "workflows"
+    __table_args__ = {"schema": "reliability"}
     workflow_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String, nullable=False)
     version = Column(String, nullable=False)
@@ -36,21 +37,23 @@ class Workflow(Base):
 
 class WorkflowRun(Base):
     __tablename__ = "workflow_runs"
+    __table_args__ = {"schema": "reliability"}
     run_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    workflow_id = Column(UUID(as_uuid=True), ForeignKey("workflows.workflow_id"))
-    status = Column(Enum(RunStatus), default=RunStatus.RUNNING)
+    workflow_id = Column(UUID(as_uuid=True), ForeignKey("reliability.workflows.workflow_id"))
+    status = Column(Enum(RunStatus, schema="reliability"), default=RunStatus.RUNNING)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class LLMCall(Base):
     __tablename__ = "llm_calls"
+    __table_args__ = {"schema": "reliability"}
     call_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    run_id = Column(UUID(as_uuid=True), ForeignKey("workflow_runs.run_id"))
+    run_id = Column(UUID(as_uuid=True), ForeignKey("reliability.workflow_runs.run_id"))
     phase_id = Column(UUID(as_uuid=True), nullable=True)
     provider = Column(String, nullable=False)
     model = Column(String, nullable=False)
-    prompt_id = Column(UUID(as_uuid=True), ForeignKey("prompts.prompt_id"))
+    prompt_id = Column(UUID(as_uuid=True), ForeignKey("reliability.prompts.prompt_id"))
     retry_attempt_num = Column(Integer, default=0)
-    failure_category = Column(Enum(FailureCategory), nullable=True)
+    failure_category = Column(Enum(FailureCategory, schema="reliability"), nullable=True)
     latency_ms = Column(Integer)
     response_raw = Column(Text)
     input_tokens = Column(Integer, nullable=True)
@@ -60,6 +63,7 @@ class LLMCall(Base):
 
 class Prompt(Base):
     __tablename__ = "prompts"
+    __table_args__ = {"schema": "reliability"}
     prompt_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     content = Column(Text, nullable=False)
     prompt_hash = Column(String, unique=True, nullable=False)
@@ -67,11 +71,12 @@ class Prompt(Base):
 
 class EscalationRecord(Base):
     __tablename__ = "escalation_records"
+    __table_args__ = {"schema": "reliability"}
     escalation_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    run_id = Column(UUID(as_uuid=True), ForeignKey("workflow_runs.run_id"))
+    run_id = Column(UUID(as_uuid=True), ForeignKey("reliability.workflow_runs.run_id"))
     phase_id = Column(UUID(as_uuid=True), nullable=True)
-    llm_call_id = Column(UUID(as_uuid=True), ForeignKey("llm_calls.call_id"))
+    llm_call_id = Column(UUID(as_uuid=True), ForeignKey("reliability.llm_calls.call_id"))
     retry_attempt_num = Column(Integer, default=0, nullable=False)
-    failure_category = Column(Enum(FailureCategory), nullable=False)
+    failure_category = Column(Enum(FailureCategory, schema="reliability"), nullable=False)
     trigger_reason = Column(String(500), nullable=False)
     escalated_at = Column(DateTime, default=datetime.utcnow)
