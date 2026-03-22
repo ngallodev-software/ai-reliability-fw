@@ -40,5 +40,5 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          TWINE_REPOSITORY_URL: https://upload.pkg.github.com/
+          TWINE_REPOSITORY_URL: https://upload.pkg.github.com/ngallodev-software/ai-reliability-fw/
         run: twine upload dist/*
