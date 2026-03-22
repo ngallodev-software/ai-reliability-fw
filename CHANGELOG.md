@@ -8,6 +8,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Postgres schema isolation: all tables and enum types moved to `reliability` schema via migration `0003_move_to_reliability_schema`
+- `src/db/session.py` sets `search_path TO reliability, public` on connect
+- GitHub Actions workflows: `ci.yml` (integration tests on push/PR), `release.yml` (build + publish to GitHub Packages + GitHub Release on tag)
+- `MANIFEST.in` to include `alembic.ini` and `migrations/` in the wheel
+
 ---
 
 ## [0.1.0] — 2026-03-18

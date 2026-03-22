@@ -9,6 +9,11 @@ dist/
 build/
 *.egg-info/
 
+# Environment
+.env
+.env.*
+!.env.sample
+
 # Generated cache files
 .dev-report-cache.md
 

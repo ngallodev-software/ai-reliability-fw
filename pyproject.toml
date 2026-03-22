@@ -25,12 +25,19 @@ dev = [
 ]
 
 [tool.setuptools]
-include-package-data = false
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*"]
+include = ["src*", "migrations*"]
 namespaces = true
+
+[tool.setuptools.package-data]
+"migrations" = ["**/*.py", "**/*.mako"]
+"src" = ["**/*.json"]
+
+# alembic.ini is shipped via MANIFEST.in so consumers can run:
+#   alembic -c $(python -c "import ai_reliability_fw; import os; print(os.path.join(os.path.dirname(ai_reliability_fw.__file__), '../../alembic.ini'))") upgrade head
 
 # Version is the single source of truth in src/__init__.py.
 # To release: bump __version__ there, update CHANGELOG.md, commit, tag v<version>.
