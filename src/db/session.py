@@ -13,7 +13,9 @@ async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncS
 
 @event.listens_for(engine.sync_engine, "connect")
 def set_search_path(dbapi_conn, connection_record):
-    dbapi_conn.execute("SET search_path TO reliability, public")
+    cursor = dbapi_conn.cursor()
+    cursor.execute("SET search_path TO reliability, public")
+    cursor.close()
 
 
 async def get_db():
