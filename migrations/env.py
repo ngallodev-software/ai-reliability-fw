@@ -43,7 +43,6 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         connection.execute(text("CREATE SCHEMA IF NOT EXISTS reliability"))
-        connection.execute(text("SET search_path TO reliability, public"))
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
