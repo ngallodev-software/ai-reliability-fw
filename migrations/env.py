@@ -41,8 +41,13 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
 
+    # Create schema outside of the migration transaction so it's committed
+    # before Alembic tries to locate or create the version table there.
     with connectable.connect() as connection:
         connection.execute(text("CREATE SCHEMA IF NOT EXISTS reliability"))
+        connection.commit()
+
+    with connectable.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
