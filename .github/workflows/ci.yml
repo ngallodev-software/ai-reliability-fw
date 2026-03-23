@@ -41,5 +41,11 @@ jobs:
       - name: Run migrations
         run: alembic upgrade head
 
+      - name: Verify schema
+        run: |
+          psql postgresql://user:pass@localhost:5432/reliability_fw_test \
+            -c "\dt reliability.*" \
+            -c "SELECT schemaname, tablename FROM pg_tables WHERE schemaname IN ('public','reliability') ORDER BY schemaname, tablename;"
+
       - name: Run tests
         run: python -m pytest tests/ -v
