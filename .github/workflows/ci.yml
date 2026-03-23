@@ -44,8 +44,8 @@ jobs:
       - name: Verify schema
         run: |
           psql postgresql://user:pass@localhost:5432/reliability_fw_test \
-            -c "\dt reliability.*" \
-            -c "SELECT schemaname, tablename FROM pg_tables WHERE schemaname IN ('public','reliability') ORDER BY schemaname, tablename;"
+            -c "SELECT schemaname, tablename FROM pg_tables WHERE schemaname NOT IN ('pg_catalog','information_schema') ORDER BY schemaname, tablename;" \
+            -c "SELECT nspname FROM pg_catalog.pg_namespace ORDER BY nspname;"
 
       - name: Run tests
         run: python -m pytest tests/ -v
