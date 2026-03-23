@@ -5,9 +5,9 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from src.core.models import Base
-from src.db.session import DATABASE_URL
+import os
 
+from src.core.models import Base
 
 config = context.config
 
@@ -16,6 +16,7 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+DATABASE_URL = os.environ["DATABASE_URL"]
 config.set_main_option("sqlalchemy.url", DATABASE_URL.replace("+asyncpg", ""))
 
 
