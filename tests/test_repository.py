@@ -22,7 +22,11 @@ DB_URL = os.environ.get(
 
 
 def make_engine():
-    return create_async_engine(DB_URL, echo=False)
+    return create_async_engine(
+        DB_URL,
+        echo=False,
+        connect_args={"server_settings": {"search_path": "reliability,public"}},
+    )
 
 
 @unittest.skipUnless(
