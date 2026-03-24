@@ -1,9 +1,9 @@
 # Architecture Decision Record — ai-reliability-fw
 
-> Last updated: 2026-03-16
+> Last updated: 2026-03-23
 
 ## PURPOSE
-Python prototype for an LLM reliability layer that wraps any async LLM client with structured input validation, output validation, retry logic, escalation handling, and full DB persistence. Goal: make LLM-powered workflows observable, reproducible, and safe to operate in production.
+Python prototype for an LLM reliability layer that wraps any async LLM client with structured input validation, output validation, retry logic, escalation handling, and full DB persistence. Goal: make LLM-powered workflows observable, reproducible, and safe to operate in production. This library is consumed by `/lump/apps/security-ai-eval-lab` as its LLM execution control plane.
 
 ## STACK
 - **Language**: Python 3.x (async/await throughout)
@@ -34,7 +34,7 @@ PostgreSQL
 **Key execution flow** (`PhaseExecutor.execute`):
 1. Pre-call: `validators[0]` runs input validation; failure → immediate escalation + HALTED
 2. Retry loop: deterministic `call_id = uuid5(run_id:phase_id:prompt_id:attempt_num)`
-3. LLM call via `llm_client.call(str(input_artifact), model=...)`
+3. LLM call via `llm_client.call(str(input_artifact), model=None)` (demo uses `CLIProvider`)
 4. Post-call: `validators[1:]` run against `response_raw`
 5. `decide(failures, retry_policy, attempt_num)` → COMPLETE / RETRY / ESCALATE
 6. `persist_llm_call()` before decision; `create_escalation()` + `update_run_status()` on terminal outcomes
@@ -47,23 +47,25 @@ PostgreSQL
 - `phase_id` is a UUID passed by caller — no FK, no `phases` table; purely a logical grouping key
 
 **Caller responsibility**: must pre-create `Workflow`, `Prompt`, and `WorkflowRun` rows before calling `execute()`. Session is passed in via constructor DI on `ReliabilityRepository`.
+**Integration boundary**: `security-ai-eval-lab` calls into `PhaseExecutor` via `PhaseExecutorAdapter`, stores its own evaluation tables, and references reliability rows by UUID without cross-project foreign keys.
 
 ## PATTERNS
 - **Idempotent inserts**: all `persist_*` methods use `ON CONFLICT DO NOTHING` — safe to replay
 - **Deterministic call IDs**: `uuid5(NAMESPACE_URL, "{run_id}:{phase_id}:{prompt_id}:{attempt_num}")` — replaying same inputs deduplicates silently
 - **Validators[0] convention**: first validator is always the pre-call input validator; `validators[1:]` are post-call. Hard convention, not type-enforced.
 - **Pure decision engine**: `decide(failures, policy, attempt_num)` is a pure function — no I/O, no side effects, fully unit-testable
-- **Fake LLM client for tests**: `FakeLLMClient` with scripted responses used in all unit tests and demo — no real LLM calls needed
+- **Fake LLM client for tests/demo**: `FakeLLMClient` with scripted responses used in tests and demo — no real LLM calls needed
 - **Manual DI**: `PhaseExecutor(repo, llm_client, validators)` — all dependencies passed explicitly, no framework
 - **Status guard**: `update_run_status` is atomic and idempotent — safe to call multiple times
 
 ## TRADEOFFS
 - **No `phases` table**: `phase_id` is an opaque UUID FK to nothing. Keeps schema simple at the cost of no phase-level metadata or ordering queries.
-- **Hardcoded model name**: `"claude-3-sonnet"` is hardcoded in `PhaseExecutor.execute()` — not configurable per-call yet (Phase 2 work).
+- **Model selection is external**: `PhaseExecutor` does not pass a model; the LLM client must return one for persistence.
 - **No `WorkflowRunner`**: multi-phase orchestration not yet implemented. Each phase is wired manually by the caller (Phase 7 roadmap).
 - **validators[0] ordering**: the input-validator-first convention is implicit. A misconfigured list silently skips pre-call validation.
 - **Token cost columns nullable**: `input_tokens`, `output_tokens`, `token_cost_usd` on `llm_calls` are nullable — LLM clients that don't return token data still persist cleanly.
 - **Sync validators in async executor**: `validator.validate()` is synchronous; fine for CPU-bound regex/schema checks but would block if validators ever do I/O.
+- **Shared DB with eval-lab**: both projects run migrations against one Postgres instance; ownership is split by schema and requires coordination.
 
 ## PHILOSOPHY
 - **Correctness over cleverness**: deterministic IDs and `ON CONFLICT DO NOTHING` make every operation safe to retry without coordination.

@@ -1,0 +1,56 @@
+erDiagram
+
+    workflows {
+        UUID workflow_id PK
+        String name
+        String version
+        JSONB definition_json
+    }
+
+    workflow_runs {
+        UUID run_id PK
+        UUID workflow_id FK
+        Enum status
+        DateTime created_at
+    }
+
+    prompts {
+        UUID prompt_id PK
+        Text content
+        String prompt_hash "unique key"
+        String version_tag
+    }
+
+    llm_calls {
+        UUID call_id PK "uuid5 deterministic"
+        UUID run_id FK
+        UUID phase_id "no FK - caller-owned"
+        UUID prompt_id FK
+        String provider
+        String model
+        Integer retry_attempt_num
+        Enum failure_category "nullable"
+        Integer latency_ms
+        Text response_raw
+        Integer input_tokens "nullable"
+        Integer output_tokens "nullable"
+        Float token_cost_usd "nullable"
+        DateTime created_at
+    }
+
+    escalation_records {
+        UUID escalation_id PK
+        UUID run_id FK
+        UUID phase_id "no FK - caller-owned"
+        UUID llm_call_id FK "nullable"
+        Integer retry_attempt_num
+        Enum failure_category
+        String trigger_reason
+        DateTime escalated_at
+    }
+
+    workflows ||--o{ workflow_runs : "has"
+    workflow_runs ||--o{ llm_calls : "produces"
+    workflow_runs ||--o{ escalation_records : "triggers"
+    prompts ||--o{ llm_calls : "used by"
+    llm_calls ||--o| escalation_records : "may cause"

@@ -139,11 +139,11 @@ classDiagram
     %% ── LLM Clients ──────────────────────────────────────────
     class BaseLLMClient {
         <<abstract>>
-        +call(prompt, model) dict
+        +call(prompt, model=None) dict
     }
 
     class CLIProvider {
-        +call(prompt, model) dict
+        +call(prompt, model=None) dict
     }
 
     BaseLLMClient <|-- CLIProvider

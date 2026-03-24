@@ -18,3 +18,7 @@ build/
 .dev-report-cache.md
 
 codex-analysis.md
+
+# implementation prompts
+impl-prompts/
+

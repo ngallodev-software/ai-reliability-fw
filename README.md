@@ -9,6 +9,8 @@ Small Python prototype for running an LLM workflow with:
 
 The current demo path is manual at the LLM boundary: you paste an LLM response into the CLI while the framework persists workflow state and decides whether to complete, retry, or escalate.
 
+This framework is also consumed by `security-ai-eval-lab` as a library via its `PhaseExecutorAdapter`. Both projects share a Postgres instance; `ai-reliability-fw` owns the `reliability.*` tables and `security-ai-eval-lab` stores evaluation tables with UUID cross-references back to `workflow_runs`, `prompts`, and `llm_calls`.
+
 ## Repository layout
 
 - `src/core/models.py` - SQLAlchemy models and enums
@@ -97,3 +99,4 @@ python -m unittest tests.test_phase_executor
 - Core schema, repository, and executor field names are aligned.
 - The phase executor now uses deterministic call IDs per run / phase / prompt / attempt for replay-safe inserts.
 - The demo now exercises the repository-backed phase executor end to end.
+- LLM call metadata (tokens/cost/latency/retry) is persisted for downstream reporting.
